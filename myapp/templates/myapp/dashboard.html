@@ -1,0 +1,38 @@
+{% extends 'myapp/index.html'%}
+
+{% block content %}
+
+	<!-- Page Content -->
+	<br/> <br/>
+	<div class="container-fluid mt-3">
+	  <div class="row">
+	    {% for pro in product %} 
+	    <div class="col-md-4">
+	      <div class="card">
+	        <div class="card-body">
+	          <h5 class="card-title">
+	            {{pro.part_name}}
+	            {% if pro.Remanufacturing_Potential < 60 %}
+	            <span class="badge badge-sm badge-success">Recycle</span>
+	            {% else %}
+	            <span class="badge badge-sm badge-warning">Remanufacture</span>
+	            {% endif %}
+	            <br/></h5>
+	          Material: {{pro.material}} <br/>
+	          Age: {{pro.age}} <br/>
+	          Manufacturer: {{pro.manufacturer}} <br/>
+
+	          Remanufacturing Potential: {{pro.Remanufacturing_Potential | floatformat:2}}<br/> <br/>
+	          {% if pro.is_Sold %}
+	          <a href="#" class="btn btn-secondary" disabled>Sold out</a>
+	            {% else %}
+	          <a href="{% url 'buy' pro.part_id %}" class="btn btn-primary">Buy Now</a>
+	          {% endif %}
+	        </div>
+	      </div>
+	    </div>
+	    {% endfor %}
+	  </div>
+	</div>
+
+{% endblock %}
