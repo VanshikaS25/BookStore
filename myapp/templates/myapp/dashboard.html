@@ -1,38 +1,109 @@
 {% extends 'myapp/index.html'%}
 
 {% block content %}
+    <form class="d-flex" id="search-form">
+        <input class="form-control me-2" type="text" id="search-input" placeholder="Enter book title">
+        <button class="btn btn-outline-success" type="submit">Search</button>
+    </form>
 
-	<!-- Page Content -->
-	<br/> <br/>
-	<div class="container-fluid mt-3">
-	  <div class="row">
-	    {% for pro in product %} 
-	    <div class="col-md-4">
-	      <div class="card">
-	        <div class="card-body">
-	          <h5 class="card-title">
-	            {{pro.part_name}}
-	            {% if pro.Remanufacturing_Potential < 60 %}
-	            <span class="badge badge-sm badge-success">Recycle</span>
-	            {% else %}
-	            <span class="badge badge-sm badge-warning">Remanufacture</span>
-	            {% endif %}
-	            <br/></h5>
-	          Material: {{pro.material}} <br/>
-	          Age: {{pro.age}} <br/>
-	          Manufacturer: {{pro.manufacturer}} <br/>
+    <br>
 
-	          Remanufacturing Potential: {{pro.Remanufacturing_Potential | floatformat:2}}<br/> <br/>
-	          {% if pro.is_Sold %}
-	          <a href="#" class="btn btn-secondary" disabled>Sold out</a>
-	            {% else %}
-	          <a href="{% url 'buy' pro.part_id %}" class="btn btn-primary">Buy Now</a>
-	          {% endif %}
-	        </div>
-	      </div>
-	    </div>
-	    {% endfor %}
-	  </div>
-	</div>
+    <div id="data-container" class="row"></div>
+    <script>
+    	const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const dataContainer = document.getElementById('data-container');
+
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const searchTerm = searchInput.value;
+            const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchTerm)}`;
+
+            dataContainer.innerHTML = '';
+
+	    	fetch(apiUrl)
+			  .then(response => response.json())
+			  .then(data => {
+			    const dataContainer = document.getElementById('data-container');
+			    const items = data.items;
+
+			    items.forEach(item => {
+			      const card = document.createElement('div');
+			      card.classList.add('col-lg-4', 'col-md-6', 'mb-4');
+
+			      const cardBody = document.createElement('div');
+			      cardBody.classList.add('card', 'h-100');
+
+			      const cardTitle = document.createElement('h5');
+			      cardTitle.classList.add('card-title');
+			      cardTitle.textContent = item.volumeInfo.title;
+
+			      const cardAuthors = document.createElement('p');
+			      cardAuthors.classList.add('card-text');
+			      cardAuthors.textContent = 'Authors: ' + item.volumeInfo.authors.join(', ');
+
+			      const cardPrice = document.createElement('p');
+			      cardPrice.classList.add('card-text');
+
+			      const cardPublisher = document.createElement('p');
+			      cardPublisher.classList.add('card-text');
+			      cardPublisher.textContent = 'Publisher: ' + item.volumeInfo.publisher;
+
+			      if(item.saleInfo.saleability == 'NOT_FOR_SALE'){
+			        cardPrice.textContent = 'Price: ' + 'NOT_FOR_SALE';
+			      }
+			      else{
+			        cardPrice.textContent = 'Price: ' + item.saleInfo.retailPrice.currencyCode+ ' '+ item.saleInfo.retailPrice.amount;
+			      }
+
+			      const cardDescription = document.createElement('p');
+			      cardDescription.classList.add('card-text');
+			      cardDescription.textContent = item.volumeInfo.description;
+			      const maxDescriptionLength = 150; // Set the maximum length of the description
+			      const truncatedDescription = item.volumeInfo.description.length > maxDescriptionLength ? item.volumeInfo.description.substring(0, maxDescriptionLength) + '...' : item.volumeInfo.description;
+			      cardDescription.textContent = truncatedDescription;
+
+			      const viewMoreLink = document.createElement('a');
+			      viewMoreLink.classList.add('card-link');
+			      viewMoreLink.href = '#';
+			      viewMoreLink.textContent = 'View More';
+			      viewMoreLink.addEventListener('click', function() {
+			          cardDescription.textContent = item.volumeInfo.description;
+			          viewMoreLink.style.display = 'none';
+			          viewLessLink.style.display = 'inline';
+			      });
+
+			      const viewLessLink = document.createElement('a');
+			      viewLessLink.classList.add('card-link');
+			      viewLessLink.href = '#';
+			      viewLessLink.textContent = 'View Less';
+			      viewLessLink.style.display = 'none';
+			      viewLessLink.addEventListener('click', function() {
+			          cardDescription.textContent = truncatedDescription;
+			          viewLessLink.style.display = 'none';
+			          viewMoreLink.style.display = 'inline';
+			      });
+			    
+			      cardBody.appendChild(cardTitle);
+			      cardBody.appendChild(cardAuthors);
+			      cardBody.appendChild(cardPrice);
+			      cardBody.appendChild(cardPublisher);
+			      cardBody.appendChild(cardDescription);
+			      if (item.volumeInfo.description.length > maxDescriptionLength) {
+			        cardBody.appendChild(viewMoreLink);
+			        cardBody.appendChild(viewLessLink);
+			      }
+			      card.appendChild(cardBody);
+			      dataContainer.appendChild(card);
+			      
+			    });
+
+			    console.log(data)
+			  })
+			  .catch(error => {
+			    console.log('Error:', error);
+			  });
+		});
+    </script>
 
 {% endblock %}
