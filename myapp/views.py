@@ -95,7 +95,7 @@ def signin(request):
 		if user is not None:
 			login(request, user)
 			fname = user.first_name
-			return render(request, 'myapp/index.html', {'fname':fname})
+			return render(request, 'myapp/dashboard.html', {'fname':fname})
 		else:
 			messages.error(request, "Bad Credentials.")
 			return redirect('home')
@@ -103,8 +103,11 @@ def signin(request):
 	return render(request, 'myapp/signin.html')
 
 def signout(request):
-	logout(request)
-	messages.success(request, "Logged Out")
+	if not request.user.is_authenticated:
+		messages.success(request, "Already Logged Out")	
+	else:
+		logout(request)
+		messages.success(request, "Logged Out")
 	return redirect('home')
 
 def activate(request, uidb64, token):
@@ -125,10 +128,12 @@ def activate(request, uidb64, token):
 
 #@login_required
 def dashboard(request):
-	return render(request, 'myapp/dashboard.html')
-	#if not request.user.is_authenticated:
-	#	return redirect('signin')
+	#return render(request, 'myapp/dashboard.html')
+	if not request.user.is_authenticated:
+		messages.success(request, 'Please sign in')
+		return redirect('signin')
 
+	return render(request, 'myapp/dashboard.html')
 	#current_user = request.user
 	#user = User.objects.get(username = current_user)
 

@@ -1,6 +1,9 @@
 {% extends 'myapp/index.html'%}
 
 {% block content %}
+	<h1> Hello {{fname}} </h1>
+    
+    <br/>
     <form class="d-flex" id="search-form">
         <input class="form-control me-2" type="text" id="search-input" placeholder="Enter book title">
         <button class="btn btn-outline-success" type="submit">Search</button>
@@ -8,102 +11,124 @@
 
     <br>
 
-    <div id="data-container" class="row"></div>
+    <div id="data-container" class="row">
+        
+    </div>
     <script>
     	const searchForm = document.getElementById('search-form');
-        const searchInput = document.getElementById('search-input');
-        const dataContainer = document.getElementById('data-container');
+		const searchInput = document.getElementById('search-input');
+		const dataContainer = document.getElementById('data-container');
 
-        searchForm.addEventListener('submit', (event) => {
-            event.preventDefault();
-            const searchTerm = searchInput.value;
-            const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchTerm)}`;
+		searchForm.addEventListener('submit', (event) => {
+		    event.preventDefault();
+		    const searchTerm = searchInput.value;
+		    const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchTerm)}`;
 
-            dataContainer.innerHTML = '';
+		    dataContainer.innerHTML = '';
 
-	    	fetch(apiUrl)
-			  .then(response => response.json())
-			  .then(data => {
-			    const dataContainer = document.getElementById('data-container');
-			    const items = data.items;
+		    fetch(apiUrl)
+		        .then(response => response.json())
+		        .then(data => {
+		            const items = data.items;
 
-			    items.forEach(item => {
-			      const card = document.createElement('div');
-			      card.classList.add('col-lg-4', 'col-md-6', 'mb-4');
+		            items.forEach(item => {
+		                const card = document.createElement('div');
+		                card.classList.add('col-12', 'mb-4');
 
-			      const cardBody = document.createElement('div');
-			      cardBody.classList.add('card', 'h-100');
+		                const cardBody = document.createElement('div');
+		                cardBody.classList.add('card', 'h-100', 'p-3', 'my-2', 'd-flex', 'flex-row');
 
-			      const cardTitle = document.createElement('h5');
-			      cardTitle.classList.add('card-title');
-			      cardTitle.textContent = item.volumeInfo.title;
+		                const cardImageContainer = document.createElement('div');
+		                cardImageContainer.classList.add('mr-3', 'flex-shrink-0');
 
-			      const cardAuthors = document.createElement('p');
-			      cardAuthors.classList.add('card-text');
-			      cardAuthors.textContent = 'Authors: ' + item.volumeInfo.authors.join(', ');
+		                const cardDetails = document.createElement('div');
+		                cardDetails.classList.add('flex-grow-1');
+		                cardDetails.style.marginTop = '3px';
+		                cardDetails.style.marginLeft = "20px";
 
-			      const cardPrice = document.createElement('p');
-			      cardPrice.classList.add('card-text');
+		                const cardImage = document.createElement('img');
+		                cardImage.classList.add('card-img-top');
+		                cardImage.src = item.volumeInfo.imageLinks?.thumbnail;
 
-			      const cardPublisher = document.createElement('p');
-			      cardPublisher.classList.add('card-text');
-			      cardPublisher.textContent = 'Publisher: ' + item.volumeInfo.publisher;
+		                const cardTitle = document.createElement('h5');
+		                cardTitle.classList.add('card-title');
+		                cardTitle.textContent = item.volumeInfo.title;
 
-			      if(item.saleInfo.saleability == 'NOT_FOR_SALE'){
-			        cardPrice.textContent = 'Price: ' + 'NOT_FOR_SALE';
-			      }
-			      else{
-			        cardPrice.textContent = 'Price: ' + item.saleInfo.retailPrice.currencyCode+ ' '+ item.saleInfo.retailPrice.amount;
-			      }
+		                const cardAuthors = document.createElement('p');
+		                cardAuthors.classList.add('card-text');
+		                cardAuthors.textContent = 'Authors: ' + (item.volumeInfo.authors ? item.volumeInfo.authors.join(', ') : 'Not Known');
 
-			      const cardDescription = document.createElement('p');
-			      cardDescription.classList.add('card-text');
-			      cardDescription.textContent = item.volumeInfo.description;
-			      const maxDescriptionLength = 150; // Set the maximum length of the description
-			      const truncatedDescription = item.volumeInfo.description.length > maxDescriptionLength ? item.volumeInfo.description.substring(0, maxDescriptionLength) + '...' : item.volumeInfo.description;
-			      cardDescription.textContent = truncatedDescription;
+		                const cardPrice = document.createElement('p');
+		                cardPrice.classList.add('card-text');
+		                cardPrice.textContent = 'Price: ' + (item.saleInfo.saleability === 'NOT_FOR_SALE' ? 'NOT_FOR_SALE' : (item.saleInfo.retailPrice?.currencyCode ? item.saleInfo.retailPrice.currencyCode + ' ' + item.saleInfo.retailPrice.amount : ''));
 
-			      const viewMoreLink = document.createElement('a');
-			      viewMoreLink.classList.add('card-link');
-			      viewMoreLink.href = '#';
-			      viewMoreLink.textContent = 'View More';
-			      viewMoreLink.addEventListener('click', function() {
-			          cardDescription.textContent = item.volumeInfo.description;
-			          viewMoreLink.style.display = 'none';
-			          viewLessLink.style.display = 'inline';
-			      });
+		                const cardPublisher = document.createElement('p');
+		                cardPublisher.classList.add('card-text');
+		                cardPublisher.textContent = 'Publisher: ' + item.volumeInfo.publisher;
 
-			      const viewLessLink = document.createElement('a');
-			      viewLessLink.classList.add('card-link');
-			      viewLessLink.href = '#';
-			      viewLessLink.textContent = 'View Less';
-			      viewLessLink.style.display = 'none';
-			      viewLessLink.addEventListener('click', function() {
-			          cardDescription.textContent = truncatedDescription;
-			          viewLessLink.style.display = 'none';
-			          viewMoreLink.style.display = 'inline';
-			      });
-			    
-			      cardBody.appendChild(cardTitle);
-			      cardBody.appendChild(cardAuthors);
-			      cardBody.appendChild(cardPrice);
-			      cardBody.appendChild(cardPublisher);
-			      cardBody.appendChild(cardDescription);
-			      if (item.volumeInfo.description.length > maxDescriptionLength) {
-			        cardBody.appendChild(viewMoreLink);
-			        cardBody.appendChild(viewLessLink);
-			      }
-			      card.appendChild(cardBody);
-			      dataContainer.appendChild(card);
-			      
-			    });
+		                const cardDescription = document.createElement('p');
+		                cardDescription.classList.add('card-text');
+		                const maxDescriptionLength = 150;
+		                const truncatedDescription = item.volumeInfo.description && item.volumeInfo.description.length > maxDescriptionLength ? item.volumeInfo.description.substring(0, maxDescriptionLength) + '...' : item.volumeInfo.description;
+		                cardDescription.textContent = truncatedDescription;
 
-			    console.log(data)
-			  })
-			  .catch(error => {
-			    console.log('Error:', error);
-			  });
+		                const viewMoreDiv = document.createElement('div'); // Create a div for the "View More" link
+		                const viewMoreLink = document.createElement('a');
+		                viewMoreLink.classList.add('card-link');
+		                viewMoreLink.href = '#';
+		                viewMoreLink.textContent = 'View More';
+		                viewMoreLink.addEventListener('click', function(event) {
+		                    event.preventDefault();
+		                    cardDescription.textContent = item.volumeInfo.description;
+		                    viewMoreDiv.style.display = 'none'; // Hide the "View More" div
+		                    viewLessLinkDiv.style.display = 'block'; // Show the "View Less" div
+		                });
+		                viewMoreDiv.appendChild(viewMoreLink);
+
+		                const viewLessLinkDiv = document.createElement('div'); // Create a div for the "View Less" link
+		                viewLessLinkDiv.style.display = 'none'; // Initially hide the "View Less" div
+
+		                const viewLessLink = document.createElement('a');
+		                viewLessLink.classList.add('card-link');
+		                viewLessLink.href = '#';
+		                viewLessLink.textContent = 'View Less';
+		                viewLessLink.addEventListener('click', function(event) {
+		                    event.preventDefault();
+		                    cardDescription.textContent = truncatedDescription;
+		                    viewLessLinkDiv.style.display = 'none'; // Hide the "View Less" div
+		                    viewMoreDiv.style.display = 'block'; // Show the "View More" div
+		                });
+		                viewLessLinkDiv.appendChild(viewLessLink);
+
+		                const button = document.createElement('a');
+		                button.classList.add('btn', 'btn-primary'); // Add 'd-block' class for block-level display
+		                button.href = item.volumeInfo.infoLink;
+		                button.target = '_blank';
+		                button.textContent = 'Go to Website';
+
+		                cardImageContainer.appendChild(cardImage);
+		                cardDetails.appendChild(cardTitle);
+		                cardDetails.appendChild(cardAuthors);
+		                cardDetails.appendChild(cardPrice);
+		                cardDetails.appendChild(cardPublisher);
+		                cardDetails.appendChild(cardDescription);
+		                cardDetails.appendChild(viewMoreDiv);
+		                cardDetails.appendChild(viewLessLinkDiv);
+		                cardDetails.appendChild(button);
+
+		                cardBody.appendChild(cardImageContainer);
+		                cardBody.appendChild(cardDetails);
+		                card.appendChild(cardBody);
+		                dataContainer.appendChild(card);
+		            });
+
+		            console.log(data);
+		        })
+		        .catch(error => {
+		            console.log('Error:', error);
+		        });
 		});
+
     </script>
 
 {% endblock %}
